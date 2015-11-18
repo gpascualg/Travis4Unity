@@ -1,0 +1,9 @@
+os:
+- linux
+sudo: required
+dist: trusty
+language: generic
+install:
+- ./TravisScripts/install.sh
+script:
+- ./TravisScripts/build.sh && ./TravisScripts/tests.sh
