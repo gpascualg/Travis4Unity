@@ -30,7 +30,8 @@ TESTS_RESULT=$?
 
 # Wait for cache upload if appliable
 if [ $USE_CACHE == 1 ]
-    if [ "$TRAVIS_BRANCH" == "devel-travis_cache" ] && [ "$TRAVIS_PULL_REQUEST" == "false" ]
+then
+    if [ "$TRAVIS_BRANCH" == "$CACHE_BRANCH" ] && [ "$TRAVIS_PULL_REQUEST" == "false" ]
     then
         echo -n "Waiting for cache to end uploading."
         while [ -f "$HOME/.RSYNC_LOCK" ]
@@ -64,18 +65,25 @@ then
     # Notify on github
     COMMIT_AUTHOR=`git log -1 | grep -Po "(?<=Author: ).*(?= <)"`
 
+    if [[ "$COMMIT_AUTHOR" == *" "* ]]
+    then
+        COMMIT_AUTHOR="Unkown GitHub username ($COMMIT_AUTHOR)"
+    else
+        COMMIT_AUTHOR="@$COMMIT_AUTHOR"
+    fi
+
     case $GITHUB_NOTIFICATIONS in
         none)
             ;;
         issue)
             curl -i -X POST -H "Authorization: token ${GITHUB_TOKEN}" -H "Content-Type: application/json" \
                 https://api.github.com/repos/$TRAVIS_REPO_SLUG/issues \
-                -d "{\"title\":\"Commit failed tests [$COMMIT_AUTHOR]\",\"body\":\"Commit by: @${COMMIT_AUTHOR}\nBranch: ${TRAVIS_BRANCH}\nCommit hash: ${TRAVIS_COMMIT}\nDetailed log: https://travis-ci.org/$TRAVIS_REPO_SLUG/builds/${TRAVIS_BUILD_ID}\"}" > /dev/null
+                -d "{\"title\":\"Commit failed tests [$COMMIT_AUTHOR]\",\"body\":\"Commit by: ${COMMIT_AUTHOR}\nBranch: ${TRAVIS_BRANCH}\nCommit hash: ${TRAVIS_COMMIT}\nDetailed log: https://travis-ci.org/$TRAVIS_REPO_SLUG/builds/${TRAVIS_BUILD_ID}\"}" > /dev/null
             ;;
         comment)
             curl -i -X POST -H "Authorization: token ${GITHUB_TOKEN}" -H "Content-Type: application/json" \
                 https://api.github.com/repos/$TRAVIS_REPO_SLUG/issues/$GITHUB_ISSUE_ID/comments \
-                -d "{\"body\":\"Commit failed **tests**.\n\nCommit by: @${COMMIT_AUTHOR}\nBranch: ${TRAVIS_BRANCH}\nCommit hash: ${TRAVIS_COMMIT}\nDetailed log: https://travis-ci.org/$TRAVIS_REPO_SLUG/builds/${TRAVIS_BUILD_ID}\"}" > /dev/null
+                -d "{\"body\":\"Commit failed **tests**.\n\nCommit by: ${COMMIT_AUTHOR}\nBranch: ${TRAVIS_BRANCH}\nCommit hash: ${TRAVIS_COMMIT}\nDetailed log: https://travis-ci.org/$TRAVIS_REPO_SLUG/builds/${TRAVIS_BUILD_ID}\"}" > /dev/null
             ;;
     esac
 fi

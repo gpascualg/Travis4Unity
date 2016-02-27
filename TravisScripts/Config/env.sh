@@ -12,13 +12,13 @@ export HOME=$(dirname "$CURRENT_DIR")
 
 # Setup Unity 3D paths
 UNITY_INSTALL=$HOME
-UNITY_ROOT=$UNITY_INSTALL/unity-editor-5.1.0f3
-UNITY_URL="http://download.unity3d.com/download_unity/unity-editor-installer-5.1.0f3+2015091501.sh"
+UNITY_ROOT=$UNITY_INSTALL/unity-editor-5.3.3f1
+UNITY_URL="http://download.unity3d.com/download_unity/linux/unity-editor-installer-5.3.3f1+20160223.sh"
 BUILD_DIR=$HOME/Build
 
 # Find Unity project folder
 # Find ProjectSettings folder
-PROJECT_NAME=$(find $HOME/$REPOSITORY_NAME -type d -iname "ProjectSettings" -print0)
+PROJECT_NAME=$(find $HOME/$REPOSITORY_NAME -maxdepth 3 -type d -iname "ProjectSettings" | head -n1)
 # Find base dirname (parent dir)
 PROJECT_NAME=$(dirname "$PROJECT_NAME")
 # Get only the path beyond $REPOSITORY_NAME

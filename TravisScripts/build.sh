@@ -23,6 +23,9 @@ sed -i 's/m_DisableAudio: 0/m_DisableAudio: 1/g' "$PROJECT_PATH/ProjectSettings/
 echo "Attempting to start dummy audio driver"
 sudo modprobe snd-dummy
 
+# Go to project root
+cd $HOME/$REPOSITORY_NAME
+
 # Build Unity project
 echo -e "\nAttempting to build $COMPILED_NAME for Linux"
 sudo -E xvfb-run --auto-servernum --server-args='-screen 0 640x480x24:32' \
@@ -64,18 +67,25 @@ echo -e "\tLinux: ${BUILD_LINUX}\n"
 # Notify on github
 COMMIT_AUTHOR=`git log -1 | grep -Po "(?<=Author: ).*(?= <)"`
 
+if [[ "$COMMIT_AUTHOR" == *" "* ]]
+then
+    COMMIT_AUTHOR="Unkown GitHub username ($COMMIT_AUTHOR)"
+else
+    COMMIT_AUTHOR="@$COMMIT_AUTHOR"
+fi
+
 case $GITHUB_NOTIFICATIONS in
     none)
         ;;
     issue)
         curl -i -X POST -H "Authorization: token ${GITHUB_TOKEN}" -H "Content-Type: application/json" \
             https://api.github.com/repos/$TRAVIS_REPO_SLUG/issues \
-            -d "{\"title\":\"Commit failed to build [$COMMIT_AUTHOR]\",\"body\":\"Commit by: @${COMMIT_AUTHOR}\nBranch: ${TRAVIS_BRANCH}\nCommit hash: ${TRAVIS_COMMIT}\nDetailed log: https://travis-ci.org/$TRAVIS_REPO_SLUG/builds/${TRAVIS_BUILD_ID}\"}" > /dev/null
+            -d "{\"title\":\"Commit failed to build [$COMMIT_AUTHOR]\",\"body\":\"Commit by: ${COMMIT_AUTHOR}\nBranch: ${TRAVIS_BRANCH}\nCommit hash: ${TRAVIS_COMMIT}\nDetailed log: https://travis-ci.org/$TRAVIS_REPO_SLUG/builds/${TRAVIS_BUILD_ID}\"}" > /dev/null
         ;;
     comment)
         curl -i -X POST -H "Authorization: token ${GITHUB_TOKEN}" -H "Content-Type: application/json" \
             https://api.github.com/repos/$TRAVIS_REPO_SLUG/issues/$GITHUB_ISSUE_ID/comments \
-            -d "{\"body\":\"Commit failed to **build**.\n\nCommit by: @${COMMIT_AUTHOR}\nBranch: ${TRAVIS_BRANCH}\nCommit hash: ${TRAVIS_COMMIT}\nDetailed log: https://travis-ci.org/$TRAVIS_REPO_SLUG/builds/${TRAVIS_BUILD_ID}\"}" > /dev/null
+            -d "{\"body\":\"Commit failed to **build**.\n\nCommit by: ${COMMIT_AUTHOR}\nBranch: ${TRAVIS_BRANCH}\nCommit hash: ${TRAVIS_COMMIT}\nDetailed log: https://travis-ci.org/$TRAVIS_REPO_SLUG/builds/${TRAVIS_BUILD_ID}\"}" > /dev/null
         ;;
 esac
 
